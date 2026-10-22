@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -38,8 +39,8 @@ func TestGetDemoUsersHandler_Integration(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := gin.New()
-	r.GET("/demo-users", GetDemoUsersHandler(db))
+	r := NewRouter(db)
+	// r.GET("/demo-users", GetDemoUsersHandler(db))
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/demo-users", nil)
@@ -47,4 +48,18 @@ func TestGetDemoUsersHandler_Integration(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "users")
+
+	var resp struct {
+		Users []struct {
+			UserID int `json:"UserID"`
+		} `json:"users"`
+	}
+
+	err = json.Unmarshal(w.Body.Bytes(), &resp)
+
+	assert.NoError(t, err)
+	assert.Len(t, resp.Users, 5)
+	for _, u := range resp.Users {
+		assert.Greater(t, u.UserID, 0)
+	}
 }

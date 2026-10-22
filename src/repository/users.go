@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -11,14 +12,14 @@ type DemoUserID struct {
 	UserID int
 }
 
-func GetDemoUsers(db *sql.DB) ([]DemoUserID, error) {
-	stmt, err := db.Prepare("SELECT id FROM users ORDER BY RAND() LIMIT 5")
+func GetDemoUsers(ctx context.Context, db *sql.DB) ([]DemoUserID, error) {
+	stmt, err := db.PrepareContext(ctx, "SELECT id FROM users ORDER BY RAND() LIMIT 5")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query()
+	rows, err := stmt.QueryContext(ctx)
 	if err != nil {
 		return nil, err
 	}

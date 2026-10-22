@@ -39,12 +39,6 @@ func main() {
 
 	log.Println("DB接続成功")
 
-	users, err := repository.GetDemoUsers(db)
-	if err != nil {
-		log.Fatalf("Error getting demo users: %v", err)
-	}
-	log.Println(users)
-
 	if err := handler.NewRouter(db).Run(":8080"); err != nil {
 		panic(err)
 	}

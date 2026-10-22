@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -31,7 +32,9 @@ func TestGetDemoUsers_Integration(t *testing.T) {
 	}
 	defer db.Close()
 
-	users, err := GetDemoUsers(db)
+	ctx := context.Background()
+
+	users, err := GetDemoUsers(ctx, db)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, users)

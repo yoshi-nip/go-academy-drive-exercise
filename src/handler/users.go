@@ -10,7 +10,9 @@ import (
 
 func GetDemoUsersHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := repository.GetDemoUsers(db)
+		ctx := c.Request.Context()
+
+		users, err := repository.GetDemoUsers(ctx, db)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "demoユーザーの取得に失敗しました"})
 			return
