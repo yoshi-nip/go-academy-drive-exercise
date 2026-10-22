@@ -40,7 +40,7 @@ func main() {
 	log.Println("DB接続成功")
 
 	userRepo := repository.NewUserRepository(db)
-	userHandler := handler.NewUserHandler(userRepo, userRepo)
+	userHandler := handler.NewUserHandler(userRepo, userRepo, userRepo)
 	router := handler.NewRouter(handler.Handlers{Users: userHandler})
 
 	if err := router.Run(":8080"); err != nil {

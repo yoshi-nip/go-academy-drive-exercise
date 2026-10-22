@@ -21,7 +21,7 @@ func TestGetDemoUsersHandler(t *testing.T) {
 		users: []model.DemoUserID{{UserID: 1}, {UserID: 2}, {UserID: 3}, {UserID: 4}, {UserID: 5}},
 	}
 
-	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{})
+	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{})
 	r := NewRouter(Handlers{Users: userHandler})
 	// r.GET("/demo-users", GetDemoUsersHandler(db))
 
@@ -34,7 +34,7 @@ func TestGetDemoUsersHandler(t *testing.T) {
 
 	var resp struct {
 		Users []struct {
-			UserID uint64 `json:"UserID"`
+			UserID uint64 `json:"user_id"`
 		} `json:"users"`
 	}
 
@@ -54,7 +54,7 @@ func TestGetDemoUsersHandler_Error(t *testing.T) {
 	reader := &stubDemoUserReader{
 		err: errors.New("取得失敗"),
 	}
-	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{})
+	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{})
 	r := NewRouter(Handlers{Users: userHandler})
 
 	w := httptest.NewRecorder()
@@ -94,14 +94,14 @@ func TestGetWatchSeriesHandler(t *testing.T) {
 	}{
 		{name: "success", id: "196606", wantID: 196606,
 			series: []model.WatchSeries{{SeriesID: "001-A", Title: "作品", GenreID: ""}},
-			status: http.StatusOK, body: `{"series":[{"SeriesID":"001-A","Title":"作品","GenreID":""}]}`},
+			status: http.StatusOK, body: `{"series":[{"series_id":"001-A","title":"作品","genre_id":""}]}`},
 		{name: "empty", id: "1", wantID: 1, series: []model.WatchSeries{}, status: http.StatusOK, body: `{"series":[]}`},
 		{name: "uint64_max", id: "18446744073709551615", wantID: ^uint64(0), series: []model.WatchSeries{}, status: http.StatusOK, body: `{"series":[]}`},
 		{name: "reader_error", id: "1", wantID: 1, err: errors.New("internal DB detail"), status: http.StatusInternalServerError, body: `{"error":"視聴シリーズの取得に失敗しました"}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reader := &stubWatchSeriesReader{series: tc.series, err: tc.err}
-			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader)})
+			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader, &stubWatchGenreReader{})})
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/users/"+tc.id+"/watch-series", nil))
 			assert.Equal(t, tc.status, w.Code)
@@ -117,7 +117,7 @@ func TestGetWatchSeriesHandler_InvalidID(t *testing.T) {
 	for _, id := range []string{"abc", "-1", "0", "18446744073709551616"} {
 		t.Run(id, func(t *testing.T) {
 			reader := &stubWatchSeriesReader{}
-			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader)})
+			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader, &stubWatchGenreReader{})})
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/users/"+id+"/watch-series", nil))
 			assert.Equal(t, http.StatusBadRequest, w.Code)
