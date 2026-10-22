@@ -45,11 +45,11 @@ func TestConnectDB_Integration(t *testing.T) {
 	}
 
 	cfgR := DBConfig{
-		Host:     os.Getenv("DB_READ_HOST"),
-		Port:     os.Getenv("DB_READ_PORT"),
-		User:     os.Getenv("DB_READ_USER"),
-		Password: os.Getenv("DB_READ_PASSWORD"),
-		DBName:   os.Getenv("DB_READ_NAME"),
+		Host:     os.Getenv("READ_DB_HOST"),
+		Port:     os.Getenv("READ_DB_PORT"),
+		User:     os.Getenv("READ_DB_USER"),
+		Password: os.Getenv("READ_DB_PASSWORD"),
+		DBName:   os.Getenv("READ_DB_NAME"),
 	}
 
 	db, err := ConnectDB(cfgR)
