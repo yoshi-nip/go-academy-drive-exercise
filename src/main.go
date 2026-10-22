@@ -39,7 +39,11 @@ func main() {
 
 	log.Println("DB接続成功")
 
-	if err := handler.NewRouter(db).Run(":8080"); err != nil {
+	userRepo := repository.NewUserRepository(db)
+	userHandler := handler.NewUserHandler(userRepo)
+	router := handler.NewRouter(handler.Handlers{Users: userHandler})
+
+	if err := router.Run(":8080"); err != nil {
 		panic(err)
 	}
 

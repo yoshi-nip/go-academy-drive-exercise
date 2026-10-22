@@ -12,8 +12,18 @@ type DemoUserID struct {
 	UserID int
 }
 
-func GetDemoUsers(ctx context.Context, db *sql.DB) ([]DemoUserID, error) {
-	stmt, err := db.PrepareContext(ctx, "SELECT id FROM users ORDER BY RAND() LIMIT 5")
+type UserRepository struct {
+	readDB *sql.DB
+}
+
+func NewUserRepository(readDB *sql.DB) *UserRepository {
+	return &UserRepository{
+		readDB: readDB,
+	}
+}
+
+func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]DemoUserID, error) {
+	stmt, err := r.readDB.PrepareContext(ctx, "SELECT id FROM users ORDER BY RAND() LIMIT 5")
 	if err != nil {
 		return nil, err
 	}

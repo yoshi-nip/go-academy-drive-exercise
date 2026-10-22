@@ -34,7 +34,8 @@ func TestGetDemoUsers_Integration(t *testing.T) {
 
 	ctx := context.Background()
 
-	users, err := GetDemoUsers(ctx, db)
+	repo := NewUserRepository(db)
+	users, err := repo.GetDemoUsers(ctx)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, users)

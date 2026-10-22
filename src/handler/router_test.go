@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"go-academy-drive-exercise/repository"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,9 +11,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type stubDemoUserReader struct {
+	users []repository.DemoUserID
+	err   error
+}
+
+func (s *stubDemoUserReader) GetDemoUsers(
+	ctx context.Context,
+) ([]repository.DemoUserID, error) {
+	return s.users, s.err
+}
 func TestHealthHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	r := NewRouter(nil)
+	r := NewRouter(Handlers{Users: &UserHandler{reader: &stubDemoUserReader{}}})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/health", nil)
