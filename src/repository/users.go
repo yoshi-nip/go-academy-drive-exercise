@@ -82,3 +82,44 @@ func (r *UserRepository) GetWatchSeries(ctx context.Context, userID uint64) ([]m
 
 	return series, nil
 }
+
+func (r *UserRepository) GetWatchGenreCounts(
+	ctx context.Context,
+	userID uint64,
+) ([]model.GenreWatchCount, error) {
+
+	stmt, err := r.readDB.PrepareContext(ctx, "SELECT s.genre_id, COUNT(*) AS series_count "+
+		"FROM user_watched_series AS w "+
+		"JOIN series AS s ON s.id = w.series_id "+
+		"WHERE w.user_id = ? "+
+		"  AND s.genre_id <> '' "+
+		"GROUP BY s.genre_id "+
+		"ORDER BY series_count DESC, s.genre_id ASC;")
+
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	genreCounts := make([]model.GenreWatchCount, 0)
+
+	for rows.Next() {
+		var g model.GenreWatchCount
+		if err := rows.Scan(&g.GenreID, &g.SeriesCount); err != nil {
+			return nil, err
+		}
+		genreCounts = append(genreCounts, g)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return genreCounts, nil
+}
