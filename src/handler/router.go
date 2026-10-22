@@ -1,14 +1,16 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter() *gin.Engine {
+func NewRouter(db *sql.DB) *gin.Engine {
 	r := gin.Default()
 	r.GET("/health", HealthHandler)
+	r.GET("/demo-users", GetDemoUsersHandler(db))
 	return r
 }
 

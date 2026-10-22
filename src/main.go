@@ -24,11 +24,11 @@ func main() {
 	}
 
 	// cfgW := repository.DBConfig{
-	// 	Host:     os.Getenv("DB_WRITE_HOST"),
-	// 	Port:     os.Getenv("DB_WRITE_PORT"),
-	// 	User:     os.Getenv("DB_WRITE_USER"),
-	// 	Password: os.Getenv("DB_WRITE_PASSWORD"),
-	// 	DBName:   os.Getenv("DB_WRITE_NAME"),
+	// 	Host:     os.Getenv("WRITE_DB_HOST"),
+	// 	Port:     os.Getenv("WRITE_DB_PORT"),
+	// 	User:     os.Getenv("WRITE_DB_USER"),
+	// 	Password: os.Getenv("WRITE_DB_PASSWORD"),
+	// 	DBName:   os.Getenv("WRITE_DB_NAME"),
 	// }
 
 	db, err := repository.ConnectDB(cfgR)
@@ -45,7 +45,7 @@ func main() {
 	}
 	log.Println(users)
 
-	if err := handler.NewRouter().Run(":8080"); err != nil {
+	if err := handler.NewRouter(db).Run(":8080"); err != nil {
 		panic(err)
 	}
 
