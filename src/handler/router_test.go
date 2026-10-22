@@ -18,5 +18,6 @@ func TestHealthHandler(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))
 	assert.JSONEq(t, `{"status":"ok"}`, w.Body.String())
 }
