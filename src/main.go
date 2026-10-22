@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import "go-academy-drive-exercise/handler"
 
 func main() {
-	fmt.Println("Hello, World!")
+	if err := handler.NewRouter().Run(":8080"); err != nil {
+		panic(err)
+	}
 }
