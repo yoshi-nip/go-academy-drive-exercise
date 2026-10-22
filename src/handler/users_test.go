@@ -3,11 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"go-academy-drive-exercise/model"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"go-academy-drive-exercise/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,7 @@ func TestGetDemoUsersHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	reader := &stubDemoUserReader{
-		users: []repository.DemoUserID{{UserID: 1}, {UserID: 2}, {UserID: 3}, {UserID: 4}, {UserID: 5}},
+		users: []model.DemoUserID{{UserID: 1}, {UserID: 2}, {UserID: 3}, {UserID: 4}, {UserID: 5}},
 	}
 
 	userHandler := NewUserHandler(reader)

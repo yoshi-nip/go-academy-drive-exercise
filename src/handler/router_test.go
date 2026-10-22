@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"go-academy-drive-exercise/repository"
+	"go-academy-drive-exercise/model"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,13 +12,13 @@ import (
 )
 
 type stubDemoUserReader struct {
-	users []repository.DemoUserID
+	users []model.DemoUserID
 	err   error
 }
 
 func (s *stubDemoUserReader) GetDemoUsers(
 	ctx context.Context,
-) ([]repository.DemoUserID, error) {
+) ([]model.DemoUserID, error) {
 	return s.users, s.err
 }
 func TestHealthHandler(t *testing.T) {

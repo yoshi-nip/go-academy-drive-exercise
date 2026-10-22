@@ -4,13 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"go-academy-drive-exercise/model"
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-type DemoUserID struct {
-	UserID int
-}
 
 type UserRepository struct {
 	readDB *sql.DB
@@ -22,7 +19,7 @@ func NewUserRepository(readDB *sql.DB) *UserRepository {
 	}
 }
 
-func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]DemoUserID, error) {
+func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]model.DemoUserID, error) {
 	stmt, err := r.readDB.PrepareContext(ctx, "SELECT id FROM users ORDER BY RAND() LIMIT 5")
 	if err != nil {
 		return nil, err
@@ -35,9 +32,9 @@ func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]DemoUserID, error)
 	}
 	defer rows.Close()
 
-	var users []DemoUserID
+	var users []model.DemoUserID
 	for rows.Next() {
-		var user DemoUserID
+		var user model.DemoUserID
 		if err := rows.Scan(&user.UserID); err != nil {
 			return nil, err
 		}

@@ -2,14 +2,14 @@ package handler
 
 import (
 	"context"
-	"go-academy-drive-exercise/repository"
+	"go-academy-drive-exercise/model"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type DemoUserReader interface {
-	GetDemoUsers(ctx context.Context) ([]repository.DemoUserID, error)
+	GetDemoUsers(ctx context.Context) ([]model.DemoUserID, error)
 }
 
 type UserHandler struct {
