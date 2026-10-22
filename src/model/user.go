@@ -1,5 +1,5 @@
 package model
 
 type DemoUserID struct {
-	UserID int `json:"UserID"`
+	UserID uint64 `json:"UserID"`
 }

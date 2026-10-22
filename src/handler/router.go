@@ -14,6 +14,7 @@ func NewRouter(h Handlers) *gin.Engine {
 	r := gin.Default()
 	r.GET("/health", HealthHandler)
 	r.GET("/demo-users", h.Users.GetDemoUsersHandler())
+	r.GET("/users/:userID/watch-series", h.Users.GetWatchSeriesHandler())
 	return r
 }
 
