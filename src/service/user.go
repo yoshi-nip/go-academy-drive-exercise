@@ -10,3 +10,5 @@ type UserChecker interface {
 }
 
 var ErrUserNotFound = errors.New("ユーザーが見つかりませんでした。s")
+
+var ErrSameUser = errors.New("同じユーザーです")

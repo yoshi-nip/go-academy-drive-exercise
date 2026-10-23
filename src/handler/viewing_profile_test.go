@@ -50,7 +50,7 @@ func TestGetViewingProfileHandler(t *testing.T) {
 				require.Equal(t, ctx, gotCtx)
 				return tc.profile, tc.err
 			}}
-			router := NewRouter(Handlers{Users: NewUserHandler(nil, nil, nil, source, nil)})
+			router := NewRouter(Handlers{Users: NewUserHandler(nil, nil, nil, source, nil, nil)})
 			req := httptest.NewRequest(http.MethodGet, "/users/"+tc.id+"/viewing-profile", nil).WithContext(ctx)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)

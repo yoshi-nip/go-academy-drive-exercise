@@ -43,7 +43,7 @@ func TestGetWatchGenreCountsHandler(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reader := &stubWatchGenreReader{genres: tc.genres, err: tc.err}
-			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, &stubWatchSeriesReader{}, reader, nil, nil)})
+			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, &stubWatchSeriesReader{}, reader, nil, nil, nil)})
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/users/"+tc.id+"/watch-genre-counts", nil))
 			assert.Equal(t, tc.status, w.Code)

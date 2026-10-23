@@ -48,7 +48,7 @@ func TestGetCandidateUsersHandler(t *testing.T) {
 				require.Equal(t, uint64(42), id)
 				return tc.users, tc.err
 			}}
-			router := NewRouter(Handlers{Users: NewUserHandler(nil, nil, nil, nil, source)})
+			router := NewRouter(Handlers{Users: NewUserHandler(nil, nil, nil, nil, source, nil)})
 			req := httptest.NewRequest(http.MethodGet, "/users/"+tc.id+"/candidate-users", nil).WithContext(ctx)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)

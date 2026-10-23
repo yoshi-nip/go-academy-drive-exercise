@@ -31,23 +31,28 @@ type ViewingProfileService interface {
 type CandidateService interface {
 	GetCandidateUsers(ctx context.Context, userID uint64) ([]model.Candidate, error)
 }
+type UserRecommendationDetailService interface {
+	GetUserRecommendationDetail(ctx context.Context, userID uint64, otherUserID uint64) (*model.UserRecommendationDetail, error)
+}
 
 type UserHandler struct {
-	reader                DemoUserReader        // IF
-	watchSeriesReader     WatchSeriesReader     // IF
-	watchGenreReader      WatchGenreReader      // IF
-	viewingProfileService ViewingProfileService // IF
-	candidateService      CandidateService      // IF
+	reader                          DemoUserReader                  // IF
+	watchSeriesReader               WatchSeriesReader               // IF
+	watchGenreReader                WatchGenreReader                // IF
+	viewingProfileService           ViewingProfileService           // IF
+	candidateService                CandidateService                // IF
+	userRecommendationDetailService UserRecommendationDetailService // IF
 }
 
 // NewUserHandler は UserHandler のコンストラクタで reader(IF)を受け取る
-func NewUserHandler(reader DemoUserReader, watchSeriesReader WatchSeriesReader, watchGenreReader WatchGenreReader, viewingProfileService ViewingProfileService, candidateService CandidateService) *UserHandler {
+func NewUserHandler(reader DemoUserReader, watchSeriesReader WatchSeriesReader, watchGenreReader WatchGenreReader, viewingProfileService ViewingProfileService, candidateService CandidateService, userRecommendationDetailService UserRecommendationDetailService) *UserHandler {
 	return &UserHandler{
-		reader:                reader,
-		watchSeriesReader:     watchSeriesReader,
-		watchGenreReader:      watchGenreReader,
-		viewingProfileService: viewingProfileService,
-		candidateService:      candidateService,
+		reader:                          reader,
+		watchSeriesReader:               watchSeriesReader,
+		watchGenreReader:                watchGenreReader,
+		viewingProfileService:           viewingProfileService,
+		candidateService:                candidateService,
+		userRecommendationDetailService: userRecommendationDetailService,
 	}
 }
 
@@ -149,9 +154,43 @@ func (h *UserHandler) GetCandidateUsersHandler() gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "ユーザーが存在しません"})
 				return
 			}
+
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "候補ユーザーの取得に失敗しました"})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"users": users})
+	}
+}
+
+func (h *UserHandler) GetUserRecommendationDetailHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		rawUserId := c.Param("userID")
+		userID, err := strconv.ParseUint(rawUserId, 10, 64)
+
+		rawOtherUserId := c.Param("otherUserID")
+		otherUserID, err2 := strconv.ParseUint(rawOtherUserId, 10, 64)
+
+		// 0も正常値と条件に含まれてしまうため条件に0も追加する
+		if err != nil || err2 != nil || userID == 0 || otherUserID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "userIDまたはotherUserIDが不正です"})
+			return
+		}
+
+		detail, err := h.userRecommendationDetailService.GetUserRecommendationDetail(ctx, userID, otherUserID)
+		if err != nil {
+			if errors.Is(err, service.ErrUserNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "ユーザーが存在しません"})
+				return
+			}
+			if errors.Is(err, service.ErrSameUser) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "同じユーザーは指定できません"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー推薦詳細の取得に失敗しました"})
+			return
+		}
+		c.JSON(http.StatusOK, detail)
 	}
 }
