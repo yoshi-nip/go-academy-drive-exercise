@@ -7,6 +7,7 @@ import (
 
 type CandidateUserReader interface {
 	GetSharedSeriesUsers(ctx context.Context, userID uint64) ([]model.UserID, error)
+	GetSharedGenreUsers(ctx context.Context, userID uint64, limit int) ([]model.UserID, error)
 }
 
 type CandidateService struct {
@@ -29,6 +30,23 @@ func (s *CandidateService) GetCandidateUsers(ctx context.Context, userID uint64)
 	if !exists {
 		return nil, ErrUserNotFound
 	}
-	return s.candidateUserReader.GetSharedSeriesUsers(ctx, userID)
+
+	candidate, err := s.candidateUserReader.GetSharedSeriesUsers(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(candidate) >= 10 {
+		return candidate, nil
+	}
+	remaining := 10 - len(candidate)
+	if remaining > 0 {
+		genreCandidates, err := s.candidateUserReader.GetSharedGenreUsers(ctx, userID, remaining)
+		if err != nil {
+			return nil, err
+		}
+		candidate = append(candidate, genreCandidates...)
+	}
+
+	return candidate, nil
 
 }

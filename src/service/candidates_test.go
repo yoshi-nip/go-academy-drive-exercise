@@ -3,14 +3,17 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/require"
-	"go-academy-drive-exercise/model"
 	"testing"
+
+	"go-academy-drive-exercise/model"
+
+	"github.com/stretchr/testify/require"
 )
 
 type candidateSourceStub struct {
-	check func(context.Context, uint64) (bool, error)
-	get   func(context.Context, uint64) ([]model.UserID, error)
+	check  func(context.Context, uint64) (bool, error)
+	get    func(context.Context, uint64) ([]model.UserID, error)
+	genres func(context.Context, uint64, int) ([]model.UserID, error)
 }
 
 func (s candidateSourceStub) UserExists(c context.Context, id uint64) (bool, error) {
@@ -19,51 +22,69 @@ func (s candidateSourceStub) UserExists(c context.Context, id uint64) (bool, err
 func (s candidateSourceStub) GetSharedSeriesUsers(c context.Context, id uint64) ([]model.UserID, error) {
 	return s.get(c, id)
 }
+func (s candidateSourceStub) GetSharedGenreUsers(c context.Context, id uint64, limit int) ([]model.UserID, error) {
+	return s.genres(c, id, limit)
+}
+
 func TestGetCandidateUsers(t *testing.T) {
 	failure := errors.New("read failed")
+	ids := func(start, count int) []model.UserID {
+		result := make([]model.UserID, 0, count)
+		for i := 0; i < count; i++ {
+			result = append(result, model.UserID{UserID: uint64(start + i)})
+		}
+		return result
+	}
 	for _, tc := range []struct {
-		name                        string
-		exists                      bool
-		checkErr, getErr, errorWant error
-		users                       []model.UserID
-		calls                       int
+		name                                   string
+		exists                                 bool
+		series, genres, want                   []model.UserID
+		checkErr, seriesErr, genreErr, wantErr error
+		calls                                  []string
+		limit                                  int
 	}{
-		{name: "success", exists: true, users: []model.UserID{{UserID: 7}}, calls: 1},
-		{name: "empty", exists: true, users: []model.UserID{}, calls: 1},
-		{name: "missing", errorWant: ErrUserNotFound},
-		{name: "check_error", checkErr: failure, errorWant: failure},
-		{name: "get_error", exists: true, getErr: failure, errorWant: failure, calls: 1},
+		{name: "full_skips_genres", exists: true, series: ids(1, 10), want: ids(1, 10), calls: []string{"check", "series"}},
+		{name: "fill_remaining", exists: true, series: ids(1, 7), genres: ids(8, 3), want: ids(1, 10), limit: 3, calls: []string{"check", "series", "genres"}},
+		{name: "insufficient", exists: true, series: ids(1, 7), genres: ids(8, 2), want: ids(1, 9), limit: 3, calls: []string{"check", "series", "genres"}},
+		{name: "empty", exists: true, series: ids(1, 0), genres: ids(1, 0), want: ids(1, 0), limit: 10, calls: []string{"check", "series", "genres"}},
+		{name: "missing", wantErr: ErrUserNotFound, calls: []string{"check"}},
+		{name: "check_error", checkErr: failure, wantErr: failure, calls: []string{"check"}},
+		{name: "series_error", exists: true, seriesErr: failure, wantErr: failure, calls: []string{"check", "series"}},
+		{name: "genre_error_discards_partial_result", exists: true, series: ids(1, 7), genreErr: failure, wantErr: failure, limit: 3, calls: []string{"check", "series", "genres"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			checked := false
-			calls := 0
+			var calls []string
+			record := func(name string, c context.Context, id uint64) {
+				require.Equal(t, ctx, c)
+				require.Equal(t, uint64(42), id)
+				calls = append(calls, name)
+			}
 			source := candidateSourceStub{
 				check: func(c context.Context, id uint64) (bool, error) {
-					require.Equal(t, ctx, c)
-					require.Equal(t, uint64(42), id)
-					checked = true
+					record("check", c, id)
 					return tc.exists, tc.checkErr
 				},
 				get: func(c context.Context, id uint64) ([]model.UserID, error) {
-					require.True(t, checked)
-					require.Equal(t, ctx, c)
-					require.Equal(t, uint64(42), id)
-					calls++
-					return tc.users, tc.getErr
+					record("series", c, id)
+					return tc.series, tc.seriesErr
+				},
+				genres: func(c context.Context, id uint64, limit int) ([]model.UserID, error) {
+					record("genres", c, id)
+					require.Equal(t, tc.limit, limit)
+					return tc.genres, tc.genreErr
 				},
 			}
 			got, err := NewCandidateService(source, source).GetCandidateUsers(ctx, 42)
-			require.True(t, checked)
 			require.Equal(t, tc.calls, calls)
-			if tc.errorWant != nil {
-				require.ErrorIs(t, err, tc.errorWant)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
 				require.Nil(t, got)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.users, got)
+				return
 			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
 		})
 	}
 }
