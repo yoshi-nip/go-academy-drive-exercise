@@ -42,8 +42,9 @@ func main() {
 
 	userRepo := repository.NewUserRepository(db)
 	viewingProfileService := service.NewViewingProfileService(userRepo, userRepo, userRepo)
+	candidateService := service.NewCandidateService(userRepo, userRepo)
 
-	userHandler := handler.NewUserHandler(userRepo, userRepo, userRepo, viewingProfileService)
+	userHandler := handler.NewUserHandler(userRepo, userRepo, userRepo, viewingProfileService, candidateService)
 	router := handler.NewRouter(handler.Handlers{Users: userHandler})
 
 	if err := router.Run(":8080"); err != nil {

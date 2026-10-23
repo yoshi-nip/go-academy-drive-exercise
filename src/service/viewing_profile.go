@@ -2,13 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 	"go-academy-drive-exercise/model"
 )
 
-type UserChecker interface {
-	UserExists(ctx context.Context, userID uint64) (bool, error)
-}
 type WatchSeriesReader interface {
 	GetWatchSeries(ctx context.Context, userID uint64) ([]model.WatchSeries, error)
 }
@@ -21,8 +17,6 @@ type ViewingProfileService struct {
 	watchSeriesReader WatchSeriesReader // 視聴シリーズを取得する、repo層
 	watchGenreReader  WatchGenreReader  // 視聴ジャンルを取得する、repo層
 }
-
-var ErrUserNotFound = errors.New("ユーザーが見つかりませんでした。s")
 
 func NewViewingProfileService(userChecker UserChecker, watchSeriesReader WatchSeriesReader, watchGenreReader WatchGenreReader) *ViewingProfileService {
 	return &ViewingProfileService{

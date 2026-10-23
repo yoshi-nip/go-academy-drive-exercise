@@ -23,7 +23,7 @@ func (s *stubDemoUserReader) GetDemoUsers(
 }
 func TestHealthHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, &stubWatchSeriesReader{}, &stubWatchGenreReader{}, nil)})
+	r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, &stubWatchSeriesReader{}, &stubWatchGenreReader{}, nil, nil)})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/health", nil)
