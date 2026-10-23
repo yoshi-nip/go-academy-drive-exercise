@@ -21,7 +21,7 @@ func TestGetDemoUsersHandler(t *testing.T) {
 		users: []model.DemoUserID{{UserID: 1}, {UserID: 2}, {UserID: 3}, {UserID: 4}, {UserID: 5}},
 	}
 
-	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{})
+	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{}, nil)
 	r := NewRouter(Handlers{Users: userHandler})
 	// r.GET("/demo-users", GetDemoUsersHandler(db))
 
@@ -54,7 +54,7 @@ func TestGetDemoUsersHandler_Error(t *testing.T) {
 	reader := &stubDemoUserReader{
 		err: errors.New("取得失敗"),
 	}
-	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{})
+	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{}, nil)
 	r := NewRouter(Handlers{Users: userHandler})
 
 	w := httptest.NewRecorder()
@@ -101,7 +101,7 @@ func TestGetWatchSeriesHandler(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reader := &stubWatchSeriesReader{series: tc.series, err: tc.err}
-			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader, &stubWatchGenreReader{})})
+			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader, &stubWatchGenreReader{}, nil)})
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/users/"+tc.id+"/watch-series", nil))
 			assert.Equal(t, tc.status, w.Code)
@@ -117,7 +117,7 @@ func TestGetWatchSeriesHandler_InvalidID(t *testing.T) {
 	for _, id := range []string{"abc", "-1", "0", "18446744073709551616"} {
 		t.Run(id, func(t *testing.T) {
 			reader := &stubWatchSeriesReader{}
-			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader, &stubWatchGenreReader{})})
+			r := NewRouter(Handlers{Users: NewUserHandler(&stubDemoUserReader{}, reader, &stubWatchGenreReader{}, nil)})
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/users/"+id+"/watch-series", nil))
 			assert.Equal(t, http.StatusBadRequest, w.Code)

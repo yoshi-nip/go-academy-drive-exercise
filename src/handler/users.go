@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"go-academy-drive-exercise/model"
+	"go-academy-drive-exercise/service"
 	"net/http"
 	"strconv"
 
@@ -23,19 +25,24 @@ type WatchGenreReader interface {
 		userID uint64,
 	) ([]model.GenreWatchCount, error)
 }
+type ViewingProfileService interface {
+	GetViewingProfile(ctx context.Context, userID uint64) (model.ViewingProfile, error)
+}
 
 type UserHandler struct {
-	reader            DemoUserReader    // IF
-	watchSeriesReader WatchSeriesReader // IF
-	watchGenreReader  WatchGenreReader  // IF
+	reader                DemoUserReader        // IF
+	watchSeriesReader     WatchSeriesReader     // IF
+	watchGenreReader      WatchGenreReader      // IF
+	viewingProfileService ViewingProfileService // IF
 }
 
 // NewUserHandler は UserHandler のコンストラクタで reader(IF)を受け取る
-func NewUserHandler(reader DemoUserReader, watchSeriesReader WatchSeriesReader, watchGenreReader WatchGenreReader) *UserHandler {
+func NewUserHandler(reader DemoUserReader, watchSeriesReader WatchSeriesReader, watchGenreReader WatchGenreReader, viewingProfileService ViewingProfileService) *UserHandler {
 	return &UserHandler{
-		reader:            reader,
-		watchSeriesReader: watchSeriesReader,
-		watchGenreReader:  watchGenreReader,
+		reader:                reader,
+		watchSeriesReader:     watchSeriesReader,
+		watchGenreReader:      watchGenreReader,
+		viewingProfileService: viewingProfileService,
 	}
 }
 
@@ -91,5 +98,30 @@ func (h *UserHandler) GetWatchGenreCountsHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"genre": genreCounts})
+	}
+}
+
+func (h *UserHandler) GetViewingProfileHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		rawUserId := c.Param("userID")
+		userID, err := strconv.ParseUint(rawUserId, 10, 64)
+
+		// 0も正常値と条件に含まれてしまうため条件に0も追加してはじく
+		if err != nil || userID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "userIDが不正です"})
+			return
+		}
+		profile, err := h.viewingProfileService.GetViewingProfile(ctx, uint64(userID))
+		if err != nil {
+			if errors.Is(err, service.ErrUserNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "ユーザーが存在しません"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "視聴プロフィールの取得に失敗しました"})
+			return
+		}
+		c.JSON(http.StatusOK, profile)
 	}
 }

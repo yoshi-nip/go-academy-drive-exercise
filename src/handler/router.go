@@ -16,6 +16,7 @@ func NewRouter(h Handlers) *gin.Engine {
 	r.GET("/demo-users", h.Users.GetDemoUsersHandler())
 	r.GET("/users/:userID/watch-series", h.Users.GetWatchSeriesHandler())
 	r.GET("/users/:userID/watch-genre-counts", h.Users.GetWatchGenreCountsHandler())
+	r.GET("/users/:userID/viewing-profile", h.Users.GetViewingProfileHandler())
 	return r
 }
 

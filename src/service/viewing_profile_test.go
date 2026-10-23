@@ -71,7 +71,7 @@ func TestGetViewingProfile(t *testing.T) {
 					return genres, record("genres", c, id)
 				},
 			}
-			s := ViewingProfileService{userChecker: source, watchSeriesReader: source, watchGenreReader: source}
+			s := NewViewingProfileService(source, source, source)
 			got, err := s.GetViewingProfile(ctx, userID)
 			require.Equal(t, tc.wantCalls, calls)
 			if tc.wantErr != nil {

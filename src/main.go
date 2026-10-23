@@ -3,6 +3,7 @@ package main
 import (
 	"go-academy-drive-exercise/handler"
 	"go-academy-drive-exercise/repository"
+	"go-academy-drive-exercise/service"
 	"log"
 	"os"
 
@@ -40,7 +41,9 @@ func main() {
 	log.Println("DB接続成功")
 
 	userRepo := repository.NewUserRepository(db)
-	userHandler := handler.NewUserHandler(userRepo, userRepo, userRepo)
+	viewingProfileService := service.NewViewingProfileService(userRepo, userRepo, userRepo)
+
+	userHandler := handler.NewUserHandler(userRepo, userRepo, userRepo, viewingProfileService)
 	router := handler.NewRouter(handler.Handlers{Users: userHandler})
 
 	if err := router.Run(":8080"); err != nil {

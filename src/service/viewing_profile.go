@@ -24,6 +24,14 @@ type ViewingProfileService struct {
 
 var ErrUserNotFound = errors.New("ユーザーが見つかりませんでした。s")
 
+func NewViewingProfileService(userChecker UserChecker, watchSeriesReader WatchSeriesReader, watchGenreReader WatchGenreReader) *ViewingProfileService {
+	return &ViewingProfileService{
+		userChecker:       userChecker,
+		watchSeriesReader: watchSeriesReader,
+		watchGenreReader:  watchGenreReader,
+	}
+}
+
 func (s *ViewingProfileService) GetViewingProfile(ctx context.Context, userID uint64) (model.ViewingProfile, error) {
 	exists, err := s.userChecker.UserExists(ctx, userID)
 	if err != nil {
