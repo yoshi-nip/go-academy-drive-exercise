@@ -195,3 +195,56 @@ func (r *UserRepository) GetSharedSeriesUsers(ctx context.Context, userID uint64
 
 	return candidates, nil
 }
+
+func (r *UserRepository) GetSharedGenreUsers(ctx context.Context, userID uint64, limit int) ([]model.UserID, error) {
+
+	stmt, err := r.readDB.PrepareContext(ctx,
+		"SELECT DISTINCT other.user_id "+
+			"FROM user_watched_series AS mine "+
+			"JOIN series AS my_series "+
+			"    ON my_series.id = mine.series_id "+
+			"JOIN series AS other_series "+
+			"    ON other_series.genre_id = my_series.genre_id "+
+			"JOIN user_watched_series AS other "+
+			"    ON other.series_id = other_series.id "+
+			"WHERE mine.user_id = ? "+
+			"  AND my_series.genre_id <> '' "+
+			"  AND other.user_id <> mine.user_id "+
+			"  AND NOT EXISTS ( "+
+			"      SELECT 1 "+
+			"      FROM user_watched_series AS my_watch "+
+			"      JOIN user_watched_series AS other_watch "+
+			"          ON other_watch.series_id = my_watch.series_id "+
+			"      WHERE my_watch.user_id = mine.user_id "+
+			"        AND other_watch.user_id = other.user_id "+
+			"  ) "+
+			"ORDER BY RAND() "+
+			"LIMIT ?;")
+
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	candidates := make([]model.UserID, 0)
+
+	for rows.Next() {
+		var u model.UserID
+		if err := rows.Scan(&u.UserID); err != nil {
+			return nil, err
+		}
+		candidates = append(candidates, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return candidates, nil
+}
