@@ -29,7 +29,7 @@ type ViewingProfileService interface {
 	GetViewingProfile(ctx context.Context, userID uint64) (model.ViewingProfile, error)
 }
 type CandidateService interface {
-	GetCandidateUsers(ctx context.Context, userID uint64) ([]model.UserID, error)
+	GetCandidateUsers(ctx context.Context, userID uint64) ([]model.Candidate, error)
 }
 
 type UserHandler struct {

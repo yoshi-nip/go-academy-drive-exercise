@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"go-academy-drive-exercise/model"
@@ -42,6 +43,7 @@ func TestGetCandidateUsers(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		name                                             string
+		reasons                                          string
 		exists                                           bool
 		series, genres, others, want                     []model.UserID
 		checkErr, seriesErr, genreErr, otherErr, wantErr error
@@ -49,11 +51,11 @@ func TestGetCandidateUsers(t *testing.T) {
 		limit                                            int
 		otherLimit                                       int
 	}{
-		{name: "full_skips_genres", exists: true, series: ids(1, 10), want: ids(1, 10), calls: []string{"check", "series"}},
-		{name: "fill_remaining", exists: true, series: ids(1, 7), genres: ids(8, 3), want: ids(1, 10), limit: 3, calls: []string{"check", "series", "genres"}},
-		{name: "fill_other", exists: true, series: ids(1, 7), genres: ids(8, 2), others: ids(10, 1), want: ids(1, 10), limit: 3, otherLimit: 1, calls: []string{"check", "series", "genres", "others"}},
-		{name: "insufficient", exists: true, series: ids(1, 4), genres: ids(5, 2), others: ids(7, 2), want: ids(1, 8), limit: 6, otherLimit: 4, calls: []string{"check", "series", "genres", "others"}},
-		{name: "only_other", exists: true, series: ids(1, 0), genres: ids(1, 0), others: ids(1, 10), want: ids(1, 10), limit: 10, otherLimit: 10, calls: []string{"check", "series", "genres", "others"}},
+		{name: "full_skips_genres", reasons: "shared_series shared_series shared_series shared_series shared_series shared_series shared_series shared_series shared_series shared_series", exists: true, series: ids(1, 10), want: ids(1, 10), calls: []string{"check", "series"}},
+		{name: "fill_remaining", reasons: "shared_series shared_series shared_series shared_series shared_series shared_series shared_series shared_genre shared_genre shared_genre", exists: true, series: ids(1, 7), genres: ids(8, 3), want: ids(1, 10), limit: 3, calls: []string{"check", "series", "genres"}},
+		{name: "fill_other", reasons: "shared_series shared_series shared_series shared_series shared_series shared_series shared_series shared_genre shared_genre other", exists: true, series: ids(1, 7), genres: ids(8, 2), others: ids(10, 1), want: ids(1, 10), limit: 3, otherLimit: 1, calls: []string{"check", "series", "genres", "others"}},
+		{name: "insufficient", reasons: "shared_series shared_series shared_series shared_series shared_genre shared_genre other other", exists: true, series: ids(1, 4), genres: ids(5, 2), others: ids(7, 2), want: ids(1, 8), limit: 6, otherLimit: 4, calls: []string{"check", "series", "genres", "others"}},
+		{name: "only_other", reasons: "other other other other other other other other other other", exists: true, series: ids(1, 0), genres: ids(1, 0), others: ids(1, 10), want: ids(1, 10), limit: 10, otherLimit: 10, calls: []string{"check", "series", "genres", "others"}},
 		{name: "other_error_discards_partial_result", exists: true, series: ids(1, 7), genres: ids(8, 2), otherErr: failure, wantErr: failure, limit: 3, otherLimit: 1, calls: []string{"check", "series", "genres", "others"}},
 		{name: "empty", exists: true, series: ids(1, 0), genres: ids(1, 0), want: ids(1, 0), limit: 10, otherLimit: 10, calls: []string{"check", "series", "genres", "others"}},
 		{name: "missing", wantErr: ErrUserNotFound, calls: []string{"check"}},
@@ -98,7 +100,14 @@ func TestGetCandidateUsers(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.want, got)
+			require.NotNil(t, got)
+			require.Len(t, got, len(tc.want))
+			wantReasons := strings.Fields(tc.reasons)
+			require.Len(t, wantReasons, len(tc.want))
+			for i, user := range tc.want {
+				require.Equal(t, user.UserID, got[i].UserID)
+				require.Equal(t, wantReasons[i], got[i].Reason)
+			}
 		})
 	}
 }

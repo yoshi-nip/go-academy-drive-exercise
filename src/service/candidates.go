@@ -23,7 +23,7 @@ func NewCandidateService(userChecker UserChecker, candidateUserReader CandidateU
 	}
 }
 
-func (s *CandidateService) GetCandidateUsers(ctx context.Context, userID uint64) ([]model.UserID, error) {
+func (s *CandidateService) GetCandidateUsers(ctx context.Context, userID uint64) ([]model.Candidate, error) {
 	exists, err := s.userChecker.UserExists(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -32,10 +32,13 @@ func (s *CandidateService) GetCandidateUsers(ctx context.Context, userID uint64)
 		return nil, ErrUserNotFound
 	}
 
-	candidate, err := s.candidateUserReader.GetSharedSeriesUsers(ctx, userID)
+	seriesCandidates, err := s.candidateUserReader.GetSharedSeriesUsers(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+
+	candidate := toCandidates(seriesCandidates, "shared_series")
+
 	if len(candidate) >= 10 {
 		return candidate, nil
 	}
@@ -46,7 +49,7 @@ func (s *CandidateService) GetCandidateUsers(ctx context.Context, userID uint64)
 		if err != nil {
 			return nil, err
 		}
-		candidate = append(candidate, genreCandidates...)
+		candidate = append(candidate, toCandidates(genreCandidates, "shared_genre")...)
 	}
 
 	remaining = 10 - len(candidate)
@@ -55,9 +58,20 @@ func (s *CandidateService) GetCandidateUsers(ctx context.Context, userID uint64)
 		if err != nil {
 			return nil, err
 		}
-		candidate = append(candidate, otherCandidates...)
+		candidate = append(candidate, toCandidates(otherCandidates, "other")...)
 	}
 
 	return candidate, nil
 
+}
+
+func toCandidates(users []model.UserID, reason string) []model.Candidate {
+	candidates := make([]model.Candidate, len(users))
+	for i, user := range users {
+		candidates[i] = model.Candidate{
+			UserID: user.UserID,
+			Reason: reason,
+		}
+	}
+	return candidates
 }
