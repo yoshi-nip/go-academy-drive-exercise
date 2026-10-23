@@ -84,11 +84,47 @@ func (r *UserRepository) GetWatchSeries(ctx context.Context, userID uint64) ([]m
 	return series, nil
 }
 
-func (r *UserRepository) GetWatchGenreCounts(
-	ctx context.Context,
-	userID uint64,
-) ([]model.GenreWatchCount, error) {
+func (r *UserRepository) GetCommonSeries(ctx context.Context, userID uint64, otherUserID uint64) ([]model.WatchSeries, error) {
+	stmt, err := r.readDB.PrepareContext(ctx,
+		"SELECT s.id AS series_id, s.title, s.genre_id "+
+			"FROM user_watched_series AS mine "+
+			"JOIN user_watched_series AS other "+
+			"    ON other.series_id = mine.series_id "+
+			"JOIN series AS s "+
+			"    ON s.id = mine.series_id "+
+			"WHERE mine.user_id = ? "+
+			"  AND other.user_id = ? "+
+			"ORDER BY s.id;")
 
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID, otherUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	series := make([]model.WatchSeries, 0)
+
+	for rows.Next() {
+		var s model.WatchSeries
+		if err := rows.Scan(&s.SeriesID, &s.Title, &s.GenreID); err != nil {
+			return nil, err
+		}
+		series = append(series, s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return series, nil
+}
+
+func (r *UserRepository) GetWatchGenreCounts(ctx context.Context, userID uint64) ([]model.GenreWatchCount, error) {
 	stmt, err := r.readDB.PrepareContext(ctx,
 		"SELECT s.genre_id, COUNT(*) AS series_count "+
 			"FROM user_watched_series AS w "+
