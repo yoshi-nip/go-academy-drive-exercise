@@ -12,13 +12,13 @@ import (
 )
 
 type stubDemoUserReader struct {
-	users []model.DemoUserID
+	users []model.UserID
 	err   error
 }
 
 func (s *stubDemoUserReader) GetDemoUsers(
 	ctx context.Context,
-) ([]model.DemoUserID, error) {
+) ([]model.UserID, error) {
 	return s.users, s.err
 }
 func TestHealthHandler(t *testing.T) {

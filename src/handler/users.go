@@ -12,7 +12,7 @@ import (
 )
 
 type DemoUserReader interface {
-	GetDemoUsers(ctx context.Context) ([]model.DemoUserID, error)
+	GetDemoUsers(ctx context.Context) ([]model.UserID, error)
 }
 
 type WatchSeriesReader interface {

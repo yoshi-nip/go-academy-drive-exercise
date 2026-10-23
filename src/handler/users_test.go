@@ -18,7 +18,7 @@ func TestGetDemoUsersHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	reader := &stubDemoUserReader{
-		users: []model.DemoUserID{{UserID: 1}, {UserID: 2}, {UserID: 3}, {UserID: 4}, {UserID: 5}},
+		users: []model.UserID{{UserID: 1}, {UserID: 2}, {UserID: 3}, {UserID: 4}, {UserID: 5}},
 	}
 
 	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{}, nil)

@@ -18,7 +18,7 @@ func NewUserRepository(readDB *sql.DB) *UserRepository {
 	}
 }
 
-func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]model.DemoUserID, error) {
+func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]model.UserID, error) {
 	stmt, err := r.readDB.PrepareContext(ctx, "SELECT id FROM users ORDER BY RAND() LIMIT 5")
 	if err != nil {
 		return nil, err
@@ -31,9 +31,9 @@ func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]model.DemoUserID, 
 	}
 	defer rows.Close()
 
-	var users []model.DemoUserID
+	var users []model.UserID
 	for rows.Next() {
-		var user model.DemoUserID
+		var user model.UserID
 		if err := rows.Scan(&user.UserID); err != nil {
 			return nil, err
 		}
@@ -48,12 +48,13 @@ func (r *UserRepository) GetDemoUsers(ctx context.Context) ([]model.DemoUserID, 
 }
 
 func (r *UserRepository) GetWatchSeries(ctx context.Context, userID uint64) ([]model.WatchSeries, error) {
-	stmt, err := r.readDB.PrepareContext(ctx, "SELECT s.id, s.title, s.genre_id "+
-		"FROM user_watched_series AS w "+
-		"JOIN series AS s ON s.id = w.series_id "+
-		"WHERE w.user_id = ? "+
-		"ORDER BY s.id "+
-		"LIMIT 5;")
+	stmt, err := r.readDB.PrepareContext(ctx,
+		"SELECT s.id, s.title, s.genre_id "+
+			"FROM user_watched_series AS w "+
+			"JOIN series AS s ON s.id = w.series_id "+
+			"WHERE w.user_id = ? "+
+			"ORDER BY s.id "+
+			"LIMIT 5;")
 
 	if err != nil {
 		return nil, err
@@ -88,13 +89,14 @@ func (r *UserRepository) GetWatchGenreCounts(
 	userID uint64,
 ) ([]model.GenreWatchCount, error) {
 
-	stmt, err := r.readDB.PrepareContext(ctx, "SELECT s.genre_id, COUNT(*) AS series_count "+
-		"FROM user_watched_series AS w "+
-		"JOIN series AS s ON s.id = w.series_id "+
-		"WHERE w.user_id = ? "+
-		"  AND s.genre_id <> '' "+
-		"GROUP BY s.genre_id "+
-		"ORDER BY series_count DESC, s.genre_id ASC;")
+	stmt, err := r.readDB.PrepareContext(ctx,
+		"SELECT s.genre_id, COUNT(*) AS series_count "+
+			"FROM user_watched_series AS w "+
+			"JOIN series AS s ON s.id = w.series_id "+
+			"WHERE w.user_id = ? "+
+			"  AND s.genre_id <> '' "+
+			"GROUP BY s.genre_id "+
+			"ORDER BY series_count DESC, s.genre_id ASC;")
 
 	if err != nil {
 		return nil, err
@@ -152,4 +154,44 @@ func (r *UserRepository) UserExists(ctx context.Context, userID uint64) (bool, e
 	}
 
 	return exists, nil
+}
+
+func (r *UserRepository) GetSharedSeriesUsers(ctx context.Context, userID uint64) ([]model.UserID, error) {
+
+	stmt, err := r.readDB.PrepareContext(ctx,
+		"SELECT DISTINCT other.user_id "+
+			"FROM user_watched_series AS mine "+
+			"JOIN user_watched_series AS other "+
+			"    ON mine.series_id = other.series_id "+
+			"WHERE mine.user_id = ? "+
+			"  AND other.user_id <> mine.user_id "+
+			"ORDER BY RAND() "+
+			"LIMIT 10;")
+
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	candidates := make([]model.UserID, 0)
+
+	for rows.Next() {
+		var u model.UserID
+		if err := rows.Scan(&u.UserID); err != nil {
+			return nil, err
+		}
+		candidates = append(candidates, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return candidates, nil
 }
