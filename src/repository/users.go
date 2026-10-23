@@ -124,6 +124,49 @@ func (r *UserRepository) GetCommonSeries(ctx context.Context, userID uint64, oth
 	return series, nil
 }
 
+func (r *UserRepository) GetCommonGenres(ctx context.Context, userID uint64, otherUserID uint64) ([]model.Genre, error) {
+	stmt, err := r.readDB.PrepareContext(ctx,
+		"SELECT DISTINCT my_series.genre_id "+
+			"FROM user_watched_series AS mine "+
+			"JOIN series AS my_series "+
+			"ON my_series.id = mine.series_id "+
+			"JOIN series AS other_series "+
+			"ON other_series.genre_id = my_series.genre_id "+
+			"JOIN user_watched_series AS other "+
+			"ON other.series_id = other_series.id "+
+			"WHERE mine.user_id = ? "+
+			"AND other.user_id = ? "+
+			"AND my_series.genre_id <> '' "+
+			"ORDER BY my_series.genre_id;")
+
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID, otherUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	genres := make([]model.Genre, 0)
+
+	for rows.Next() {
+		var g model.Genre
+		if err := rows.Scan(&g.GenreID); err != nil {
+			return nil, err
+		}
+		genres = append(genres, g)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return genres, nil
+}
+
 func (r *UserRepository) GetWatchGenreCounts(ctx context.Context, userID uint64) ([]model.GenreWatchCount, error) {
 	stmt, err := r.readDB.PrepareContext(ctx,
 		"SELECT s.genre_id, COUNT(*) AS series_count "+
