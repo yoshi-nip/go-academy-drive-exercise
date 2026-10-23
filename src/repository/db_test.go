@@ -1,12 +1,12 @@
 package repository
 
 import (
-	"log"
 	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -41,7 +41,7 @@ func TestConnectDB_Integration(t *testing.T) {
 	}
 
 	if err := godotenv.Load("../.env"); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		t.Fatalf("Error loading .env file: %v", err)
 	}
 
 	cfgR := DBConfig{
@@ -54,12 +54,8 @@ func TestConnectDB_Integration(t *testing.T) {
 
 	db, err := ConnectDB(cfgR)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, db)
-
-	if db != nil {
-		err = db.Ping()
-		assert.NoError(t, err)
-	}
+	require.NoError(t, err)
+	require.NotNil(t, db)
 	defer db.Close()
+	assert.NoError(t, db.Ping())
 }

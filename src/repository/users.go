@@ -123,3 +123,33 @@ func (r *UserRepository) GetWatchGenreCounts(
 
 	return genreCounts, nil
 }
+
+func (r *UserRepository) UserExists(ctx context.Context, userID uint64) (bool, error) {
+
+	stmt, err := r.readDB.PrepareContext(ctx, "SELECT EXISTS( SELECT 1 FROM users WHERE id = ?)")
+
+	if err != nil {
+		return false, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	var exists bool
+
+	if rows.Next() {
+		if err := rows.Scan(&exists); err != nil {
+			return false, err
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
