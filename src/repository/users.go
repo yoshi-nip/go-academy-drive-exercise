@@ -84,6 +84,50 @@ func (r *UserRepository) GetWatchSeries(ctx context.Context, userID uint64) ([]m
 	return series, nil
 }
 
+func (r *UserRepository) GetRecommendedSeries(ctx context.Context, userID uint64) ([]model.WatchSeries, error) {
+	stmt, err := r.readDB.PrepareContext(ctx,
+		"SELECT s.id AS series_id, s.title, s.genre_id "+
+			"FROM user_recommended_series AS recommended "+
+			"JOIN series AS s "+
+			"    ON s.id = recommended.series_id "+
+			"WHERE recommended.user_id = ? "+
+			"  AND NOT EXISTS ( "+
+			"      SELECT 1 "+
+			"      FROM user_watched_series AS watched "+
+			"      WHERE watched.user_id = recommended.user_id "+
+			"        AND watched.series_id = recommended.series_id "+
+			"  ) "+
+			"ORDER BY RAND() "+
+			"LIMIT 5;")
+
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	series := make([]model.WatchSeries, 0)
+
+	for rows.Next() {
+		var s model.WatchSeries
+		if err := rows.Scan(&s.SeriesID, &s.Title, &s.GenreID); err != nil {
+			return nil, err
+		}
+		series = append(series, s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return series, nil
+}
+
 func (r *UserRepository) GetCommonSeries(ctx context.Context, userID uint64, otherUserID uint64) ([]model.WatchSeries, error) {
 	stmt, err := r.readDB.PrepareContext(ctx,
 		"SELECT s.id AS series_id, s.title, s.genre_id "+
