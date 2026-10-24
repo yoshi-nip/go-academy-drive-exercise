@@ -35,7 +35,7 @@ func TestGetWatchGenreCountsHandler(t *testing.T) {
 	}{
 		{name: "success", id: "42", genres: []model.GenreWatchCount{{GenreID: "001", SeriesCount: 8}}, status: 200, calls: 1, body: `{"genre":[{"genre_id":"001","series_count":8}]}`},
 		{name: "empty", id: "42", genres: []model.GenreWatchCount{}, status: 200, calls: 1, body: `{"genre":[]}`},
-		{name: "error", id: "42", err: errors.New("internal detail"), status: 500, calls: 1, body: `{"error":"視聴ジャンル集計の取得に失敗しました"}`},
+		{name: "error", id: "42", genres: []model.GenreWatchCount{{GenreID: "partial", SeriesCount: 1}}, err: errors.New("internal detail"), status: 500, calls: 1, body: `{"error":"視聴ジャンル集計の取得に失敗しました"}`},
 		{name: "letters", id: "abc", status: 400, body: `{"error":"userIDが不正です"}`},
 		{name: "zero", id: "0", status: 400, body: `{"error":"userIDが不正です"}`},
 		{name: "negative", id: "-1", status: 400, body: `{"error":"userIDが不正です"}`},

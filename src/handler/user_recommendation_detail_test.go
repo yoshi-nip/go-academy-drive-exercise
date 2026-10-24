@@ -36,7 +36,7 @@ func TestGetUserRecommendationDetailHandler(t *testing.T) {
 		{name: "success", detail: detail, status: 200, body: `{"user_id":42,"other_user_id":99,"common_series":[{"series_id":"s1","title":"作品","genre_id":"movie"}],"common_genres":[{"genre_id":"movie"}],"recommended_series":[{"series_id":"s2","title":"推薦","genre_id":"animation"}]}`},
 		{name: "empty", detail: empty, status: 200, body: `{"user_id":42,"other_user_id":99,"common_series":[],"common_genres":[],"recommended_series":[]}`},
 		{name: "missing", err: fmt.Errorf("lookup: %w", service.ErrUserNotFound), status: 404, body: `{"error":"ユーザーが存在しません"}`},
-		{name: "error", err: errors.New("private detail"), status: 500, body: `{"error":"ユーザー推薦詳細の取得に失敗しました"}`},
+		{name: "error", detail: detail, err: errors.New("private detail"), status: 500, body: `{"error":"ユーザー推薦詳細の取得に失敗しました"}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())

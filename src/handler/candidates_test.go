@@ -32,7 +32,7 @@ func TestGetCandidateUsersHandler(t *testing.T) {
 		{name: "success", id: "42", users: []model.Candidate{{UserID: 7, Reason: "shared_series"}, {UserID: 8, Reason: "shared_genre"}, {UserID: 9, Reason: "other"}}, status: 200, calls: 1, body: `{"users":[{"user_id":7,"reason":"shared_series"},{"user_id":8,"reason":"shared_genre"},{"user_id":9,"reason":"other"}]}`},
 		{name: "empty", id: "42", users: []model.Candidate{}, status: 200, calls: 1, body: `{"users":[]}`},
 		{name: "missing", id: "42", err: fmt.Errorf("lookup: %w", service.ErrUserNotFound), status: 404, calls: 1, body: `{"error":"ユーザーが存在しません"}`},
-		{name: "error", id: "42", err: errors.New("private detail"), status: 500, calls: 1, body: `{"error":"候補ユーザーの取得に失敗しました"}`},
+		{name: "error", id: "42", users: []model.Candidate{{UserID: 7, Reason: "shared_series"}}, err: errors.New("private detail"), status: 500, calls: 1, body: `{"error":"候補ユーザーの取得に失敗しました"}`},
 		{name: "letters", id: "abc", status: 400, body: `{"error":"userIDが不正です"}`},
 		{name: "zero", id: "0", status: 400, body: `{"error":"userIDが不正です"}`},
 		{name: "negative", id: "-1", status: 400, body: `{"error":"userIDが不正です"}`},

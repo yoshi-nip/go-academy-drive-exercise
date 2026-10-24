@@ -52,7 +52,8 @@ func TestGetDemoUsersHandler_Error(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	reader := &stubDemoUserReader{
-		err: errors.New("取得失敗"),
+		users: []model.UserID{{UserID: 42}},
+		err:   errors.New("private DB detail"),
 	}
 	userHandler := NewUserHandler(reader, &stubWatchSeriesReader{}, &stubWatchGenreReader{}, nil, nil, nil)
 	r := NewRouter(Handlers{Users: userHandler})
@@ -97,7 +98,7 @@ func TestGetWatchSeriesHandler(t *testing.T) {
 			status: http.StatusOK, body: `{"series":[{"series_id":"001-A","title":"作品","genre_id":""}]}`},
 		{name: "empty", id: "1", wantID: 1, series: []model.WatchSeries{}, status: http.StatusOK, body: `{"series":[]}`},
 		{name: "uint64_max", id: "18446744073709551615", wantID: ^uint64(0), series: []model.WatchSeries{}, status: http.StatusOK, body: `{"series":[]}`},
-		{name: "reader_error", id: "1", wantID: 1, err: errors.New("internal DB detail"), status: http.StatusInternalServerError, body: `{"error":"視聴シリーズの取得に失敗しました"}`},
+		{name: "reader_error", id: "1", wantID: 1, series: []model.WatchSeries{{SeriesID: "partial"}}, err: errors.New("internal DB detail"), status: http.StatusInternalServerError, body: `{"error":"視聴シリーズの取得に失敗しました"}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reader := &stubWatchSeriesReader{series: tc.series, err: tc.err}
